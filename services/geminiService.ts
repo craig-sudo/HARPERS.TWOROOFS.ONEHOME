@@ -210,16 +210,55 @@ export async function generateSpeech(text: string): Promise<string> {
     return base64Audio;
 }
 
-// 9. Video Analyzer (Placeholder)
-export async function analyzeVideo(videoFile: File, prompt: string): Promise<{ summary: string }> {
-    // Placeholder function. The current @google/genai SDK documentation provided
-    // does not include a method for direct video file analysis with gemini-2.5-pro.
-    // This would require a different API endpoint or an updated SDK version.
-    console.log("Video analysis called with:", videoFile.name, prompt);
-    
-    // Simulate a delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+// --- Helper for converting a File to a base64 generative part ---
+const fileToGenerativePart = (file: File) => {
+    return new Promise<{ inlineData: { data: string, mimeType: string } }>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+            if (typeof reader.result !== 'string') {
+                return reject("File reading did not result in a string.");
+            }
+            resolve({
+                inlineData: {
+                    data: reader.result.split(',')[1],
+                    mimeType: file.type
+                }
+            });
+        };
+        reader.onerror = err => reject(err);
+    });
+};
 
-    // Throw an error to inform the user this is not implemented.
-    throw new Error("Video analysis is not yet supported in this application.");
+
+// 9. Video Analyzer
+export async function analyzeVideo(videoFile: File, prompt: string): Promise<{ summary: string }> {
+    // Add a size limit for stability, as base64 encoding can be memory intensive.
+    if (videoFile.size > 20 * 1024 * 1024) { // 20MB limit
+        throw new Error("Video file is too large for browser-based analysis. Please use a file smaller than 20MB.");
+    }
+
+    const videoPart = await fileToGenerativePart(videoFile);
+
+    const response = await ai.models.generateContent({
+        model: "gemini-2.5-pro",
+        contents: {
+            parts: [
+                videoPart,
+                { text: `Analyze this video based on the following prompt, keeping the child's best interest as the primary focus. Prompt: "${prompt}"` }
+            ]
+        },
+        config: {
+            systemInstruction: `${NB_LAW_CONTEXT} You are a Video Analyzer. Your role is to extract key information and provide a factual summary from video evidence. Your analysis must be objective and directly relevant to co-parenting and child welfare matters.`,
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    summary: { type: Type.STRING, description: "A detailed, factual summary of the key events, interactions, and speech in the video that are relevant to the prompt." }
+                }
+            }
+        }
+    });
+
+    return parseJsonResponse<{ summary: string }>(response.text);
 }
