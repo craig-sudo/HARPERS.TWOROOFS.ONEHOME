@@ -12,6 +12,11 @@ import EvidenceProcessor from './features/EvidenceProcessor';
 import ScheduleOptimizer from './features/ScheduleOptimizer';
 import ExpenseCategorizer from './features/ExpenseCategorizer';
 import SleepAssistant from './features/SleepAssistant';
+// FIX: Switched to a named import for LegalTeamView to resolve module resolution error.
+import { LegalTeamView } from './features/LegalTeamView';
+import FamilyHandbook from './features/FamilyHandbook';
+import LunaiAssistant from './features/AiAssistant';
+import VideoAnalyzer from './features/VideoAnalyzer';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<string>('dashboard');
@@ -24,6 +29,10 @@ const App: React.FC = () => {
         return <CalendarPage />;
       case 'communication':
         return <CommunicationPlatform />;
+      case 'legal-team':
+        return <LegalTeamView />;
+      case 'family-handbook':
+        return <FamilyHandbook />;
       // AI Tools
       case 'child-first-coach':
         return <ChildFirstCoach />;
@@ -39,6 +48,10 @@ const App: React.FC = () => {
         return <ExpenseCategorizer />;
       case 'sleep-assistant':
         return <SleepAssistant />;
+      case 'lunai-assistant':
+        return <LunaiAssistant />;
+      case 'video-analyzer':
+        return <VideoAnalyzer />;
       default:
         return <Dashboard setActiveView={setActiveView} />;
     }

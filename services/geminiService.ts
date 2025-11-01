@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 import {
     ChildFirstCoachResponse,
     StructuredActionLogResponse,
@@ -31,18 +31,20 @@ function parseJsonResponse<T,>(text: string): T {
 }
 
 // 1. Child-First Coach
-export async function getImprovedCommunication(message: string): Promise<ChildFirstCoachResponse> {
+export async function getImprovedCommunication(message: string, childName: string): Promise<ChildFirstCoachResponse> {
     const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
-        contents: `Original message: "${message}". Please revise this message to be collaborative and child-focused. Also provide a list of key changes explaining the reasoning for each revision.`,
+        contents: `Analyze this co-parenting message regarding the child, ${childName}: "${message}". Revise it to be collaborative and child-focused. Provide a list of key changes explaining the reasoning. Also provide a tone score from 0 (very negative) to 100 (very positive) and a classification (e.g., 'Aggressive', 'Collaborative', 'Neutral').`,
         config: {
-            systemInstruction: `${NB_LAW_CONTEXT} You are the Child-First Coach. Rewrite accusatory language into collaborative, child-focused statements to satisfy 'good faith efforts' metrics.`,
+            systemInstruction: `${NB_LAW_CONTEXT} You are the Child-First Coach. Rewrite accusatory language into collaborative, child-focused statements to satisfy 'good faith efforts' metrics. Analyze the tone and classify the original message.`,
             responseMimeType: "application/json",
             responseSchema: {
                 type: Type.OBJECT,
                 properties: {
                     revisedMessage: { type: Type.STRING, description: "The revised, child-focused message." },
-                    keyChanges: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Objective reasons for each revision." }
+                    keyChanges: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Objective reasons for each revision." },
+                    tone: { type: Type.NUMBER, description: "A tone score from 0 (very negative) to 100 (very positive)." },
+                    classification: { type: Type.STRING, description: "A classification of the original message's tone (e.g., 'Aggressive', 'Collaborative')." }
                 }
             }
         }
@@ -189,4 +191,35 @@ export async function getSleepSchedule(ageInMonths: number, recentLogs: string, 
         }
     });
     return parseJsonResponse<SleepAssistantResponse>(response.text);
+}
+
+// 8. Text-to-Speech
+export async function generateSpeech(text: string): Promise<string> {
+    const localAi = new GoogleGenAI({ apiKey: API_KEY });
+    const response = await localAi.models.generateContent({
+        model: "gemini-2.5-flash-preview-tts",
+        contents: [{ parts: [{ text }] }],
+        config: {
+            responseModalities: [Modality.AUDIO],
+        },
+    });
+    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!base64Audio) {
+        throw new Error("No audio data returned from API.");
+    }
+    return base64Audio;
+}
+
+// 9. Video Analyzer (Placeholder)
+export async function analyzeVideo(videoFile: File, prompt: string): Promise<{ summary: string }> {
+    // Placeholder function. The current @google/genai SDK documentation provided
+    // does not include a method for direct video file analysis with gemini-2.5-pro.
+    // This would require a different API endpoint or an updated SDK version.
+    console.log("Video analysis called with:", videoFile.name, prompt);
+    
+    // Simulate a delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // Throw an error to inform the user this is not implemented.
+    throw new Error("Video analysis is not yet supported in this application.");
 }

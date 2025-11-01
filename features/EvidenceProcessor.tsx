@@ -127,17 +127,16 @@ const EvidenceProcessor: React.FC = () => {
                                 <h3 className="font-semibold text-gray-700">Factual Summary:</h3>
                                 <p className="text-gray-800 bg-gray-50 p-2 rounded border whitespace-pre-wrap">{response.summary}</p>
                             </div>
-                             <div>
-                                <div className="flex justify-between items-center mb-1">
-                                    <h3 className="font-semibold text-gray-700">Extracted Text:</h3>
-                                    {response.ocrConfidence != null ? (
-                                        <span className="text-sm font-medium text-gray-700 bg-green-100 px-2 py-0.5 rounded-full">
-                                            Confidence: {(response.ocrConfidence * 100).toFixed(0)}%
-                                        </span>
-                                     ) : (
-                                        <span className="text-xs text-gray-500 italic">Confidence score not available</span>
-                                     )}
+                            {response.ocrConfidence != null && (
+                                <div>
+                                    <h3 className="font-semibold text-gray-700">OCR Confidence:</h3>
+                                    <p className="text-gray-800 bg-gray-50 p-2 rounded border">
+                                        {(response.ocrConfidence * 100).toFixed(0)}%
+                                    </p>
                                 </div>
+                            )}
+                             <div>
+                                <h3 className="font-semibold text-gray-700 mb-1">Extracted Text:</h3>
                                 <p className="text-gray-800 bg-gray-50 p-2 rounded border whitespace-pre-wrap h-48 overflow-y-auto">{response.extractedText}</p>
                             </div>
                         </div>

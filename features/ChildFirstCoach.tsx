@@ -5,6 +5,7 @@ import { TOOLS } from '../constants';
 
 const ChildFirstCoach: React.FC = () => {
     const [message, setMessage] = useState('');
+    const [childName, setChildName] = useState('Harper');
     const [response, setResponse] = useState<ChildFirstCoachResponse | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -21,13 +22,25 @@ const ChildFirstCoach: React.FC = () => {
         setResponse(null);
 
         try {
-            const result = await getImprovedCommunication(message);
+            const result = await getImprovedCommunication(message, childName);
             setResponse(result);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
         } finally {
             setLoading(false);
         }
+    };
+
+    const getToneColor = (tone: number) => {
+        if (tone < 40) return 'text-red-600';
+        if (tone < 70) return 'text-yellow-600';
+        return 'text-green-600';
+    };
+
+    const getToneBgColor = (tone: number) => {
+        if (tone < 40) return 'bg-red-500';
+        if (tone < 70) return 'bg-yellow-500';
+        return 'bg-green-500';
     };
 
     return (
@@ -54,6 +67,17 @@ const ChildFirstCoach: React.FC = () => {
                             disabled={loading}
                         />
                     </div>
+                    <div className="mb-4">
+                        <label htmlFor="childName" className="block text-gray-700 font-semibold mb-2">Child's Name (for context)</label>
+                        <input
+                            id="childName"
+                            type="text"
+                            value={childName}
+                            onChange={(e) => setChildName(e.target.value)}
+                            className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            disabled={loading}
+                        />
+                    </div>
                     <button
                         type="submit"
                         disabled={loading}
@@ -67,22 +91,40 @@ const ChildFirstCoach: React.FC = () => {
 
                 {response && (
                     <div className="bg-white p-6 rounded-lg shadow-md">
-                        <h2 className="text-xl font-bold text-gray-800 mb-4">Revised Communication</h2>
+                        <h2 className="text-xl font-bold text-gray-800 mb-4">Analysis &amp; Revision</h2>
                         
-                        <div className="mb-6">
-                            <h3 className="font-semibold text-gray-700 mb-2">Suggested Message:</h3>
-                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                <p className="text-gray-800 whitespace-pre-wrap">{response.revisedMessage}</p>
+                        <div className="grid md:grid-cols-2 gap-6 mb-6 border-b pb-6">
+                            <div>
+                                <h3 className="font-semibold text-gray-700 mb-2">Tone Analysis</h3>
+                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full flex flex-col justify-center">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-medium">Original Message Tone</span>
+                                        <span className={`text-lg font-bold ${getToneColor(response.tone)}`}>{response.tone}/100</span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div className={`${getToneBgColor(response.tone)} h-2.5 rounded-full`} style={{ width: `${response.tone}%` }}></div>
+                                    </div>
+                                    <div className="flex items-center justify-between mt-3">
+                                        <span className="text-sm font-medium">Classification</span>
+                                        <span className="text-sm font-semibold bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full">{response.classification}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-gray-700 mb-2">Key Changes &amp; Reasoning</h3>
+                                <ul className="list-disc list-inside space-y-2 text-gray-700 text-sm h-36 overflow-y-auto bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                    {response.keyChanges.map((change, index) => (
+                                        <li key={index}>{change}</li>
+                                    ))}
+                                </ul>
                             </div>
                         </div>
 
                         <div>
-                            <h3 className="font-semibold text-gray-700 mb-2">Key Changes & Reasoning:</h3>
-                            <ul className="list-disc list-inside space-y-2 text-gray-700">
-                                {response.keyChanges.map((change, index) => (
-                                    <li key={index}>{change}</li>
-                                ))}
-                            </ul>
+                            <h3 className="font-semibold text-gray-700 mb-2">Suggested Message:</h3>
+                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <p className="text-gray-800 whitespace-pre-wrap">{response.revisedMessage}</p>
+                            </div>
                         </div>
                     </div>
                 )}

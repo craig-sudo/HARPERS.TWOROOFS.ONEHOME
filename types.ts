@@ -23,6 +23,8 @@ export enum ExpenseCategory {
 export interface ChildFirstCoachResponse {
     revisedMessage: string;
     keyChanges: string[];
+    tone: number;
+    classification: string;
 }
 
 export interface StructuredActionLogResponse {

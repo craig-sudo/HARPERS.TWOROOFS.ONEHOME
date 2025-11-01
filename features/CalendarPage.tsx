@@ -1,16 +1,51 @@
 import React from 'react';
 
-// FIX: Add explicit types for props to resolve TypeScript error with 'key' prop.
-const CalendarDay = ({ day, isCurrentMonth, isToday, events = [] }: { day: number; isCurrentMonth: boolean; isToday: boolean; events?: { id: number; title: string; color: string; }[] }) => {
-    const dayClasses = `h-24 border-t border-r border-gray-200 p-2 flex flex-col ${isCurrentMonth ? 'bg-white' : 'bg-gray-50'}`;
-    const dateClasses = `w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-harper-purple text-white' : ''} ${!isCurrentMonth ? 'text-gray-400' : ''}`;
+// Define event types and their visual properties for better organization and scalability.
+const EVENT_TYPES = {
+    MOMS_TIME: 'Moms_Time',
+    DADS_TIME: 'Dads_Time',
+    CHILDS_ACTIVITY: 'Childs_Activity',
+};
+
+const eventConfig = {
+    [EVENT_TYPES.MOMS_TIME]: {
+        label: "Mom's Time",
+        className: 'bg-pink-200 text-pink-800',
+        keyColor: 'bg-pink-400',
+    },
+    [EVENT_TYPES.DADS_TIME]: {
+        label: "Dad's Time",
+        className: 'bg-blue-200 text-blue-800',
+        keyColor: 'bg-blue-400',
+    },
+    [EVENT_TYPES.CHILDS_ACTIVITY]: {
+        label: "Child's Activities",
+        className: 'bg-harper-green/40 text-green-900',
+        keyColor: 'bg-harper-green',
+    },
+};
+
+// NOTE: Sample events have been removed. The calendar will now be driven by the active parenting plan.
+const sampleEvents: { [key: number]: { id: number; title: string; type: string }[] } = {};
+
+
+interface CalendarEvent {
+    id: number;
+    title: string;
+    type: string;
+}
+
+// FIX: Updated props to use a structured event type for better code clarity and scalability.
+const CalendarDay = ({ day, isCurrentMonth, isToday, events = [] }: { day: number; isCurrentMonth: boolean; isToday: boolean; events?: CalendarEvent[] }) => {
+    const dayClasses = `h-28 border-t border-r border-gray-200 p-2 flex flex-col ${isCurrentMonth ? 'bg-white' : 'bg-gray-50'}`;
+    const dateClasses = `w-7 h-7 flex items-center justify-center rounded-full text-sm ${isToday ? 'bg-harper-purple text-white font-bold' : ''} ${!isCurrentMonth ? 'text-gray-400' : 'text-gray-700'}`;
 
     return (
         <div className={dayClasses}>
             <span className={dateClasses}>{day}</span>
-            <div className="mt-1 flex-grow overflow-y-auto">
+            <div className="mt-1 flex-grow overflow-y-auto text-xs space-y-1">
                 {events.map(event => (
-                    <div key={event.id} className={`text-xs p-1 rounded mb-1 ${event.color === 'pink' ? 'bg-pink-200' : 'bg-blue-200'}`}>
+                    <div key={event.id} className={`p-1 rounded font-medium truncate ${eventConfig[event.type]?.className || ''}`}>
                         {event.title}
                     </div>
                 ))}
@@ -29,16 +64,27 @@ const CalendarPage: React.FC = () => {
 
     return (
         <div className="space-y-8">
-            <h1 className="text-4xl font-bold text-gray-900">Family Calendar</h1>
-            <p className="text-lg text-gray-600">Coordinate schedules, events, and memories based on the current plan.</p>
+            <div>
+                 <h1 className="text-4xl font-bold text-gray-900">Family Calendar</h1>
+                 <p className="text-lg text-gray-600">This calendar automatically displays the schedule from your active parenting plan in the Living Handbook.</p>
+            </div>
             
+            <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg" role="alert">
+                <p className="font-bold">This calendar is now read-only.</p>
+                <p>To make changes, please propose an amendment to your parenting plan in the Living Handbook.</p>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Calendar View */}
                 <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
                     <div className="flex items-center justify-between mb-4">
-                        <button className="p-2 rounded-full hover:bg-gray-100">&lt;</button>
+                        <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                        </button>
                         <h2 className="text-xl font-bold">October 2025</h2>
-                        <button className="p-2 rounded-full hover:bg-gray-100">&gt;</button>
+                        <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                        </button>
                     </div>
                     <div className="grid grid-cols-7 text-center font-semibold text-gray-600 border-b border-l border-r border-gray-200">
                         {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
@@ -52,7 +98,7 @@ const CalendarPage: React.FC = () => {
                             day={d.day} 
                             isCurrentMonth={d.isCurrent} 
                             isToday={d.day === 12 && d.isCurrent} 
-                            events={d.day === 5 ? [{id: 1, title: "Dad's Time", color: 'blue'}] : d.day === 19 ? [{id: 2, title: "Mom's Time", color: 'pink'}] : []}
+                            events={d.isCurrent ? sampleEvents[d.day] || [] : []}
                            />
                         ))}
                     </div>
@@ -63,22 +109,21 @@ const CalendarPage: React.FC = () => {
                     <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
                         <h3 className="font-bold text-lg mb-4">Schedule Key</h3>
                         <div className="space-y-3">
-                            <div className="flex items-center"><span className="w-4 h-4 rounded-full bg-pink-400 mr-3"></span>Mom's Time</div>
-                            <div className="flex items-center"><span className="w-4 h-4 rounded-full bg-blue-400 mr-3"></span>Dad's Time</div>
-                            <div className="flex items-center"><span className="w-4 h-4 rounded-full bg-gray-300 mr-3"></span>Alternate Block</div>
-                            <div className="flex items-center"><span className="w-4 h-4 rounded-full bg-yellow-300 mr-3"></span>Birthday</div>
+                           {Object.values(EVENT_TYPES).map(type => (
+                                <div key={type} className="flex items-center">
+                                    <span className={`w-4 h-4 rounded-full ${eventConfig[type].keyColor} mr-3`}></span>
+                                    {eventConfig[type].label}
+                                </div>
+                            ))}
                         </div>
                     </div>
                      <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
-                        <h3 className="font-bold text-lg mb-2">September 5th, 2025</h3>
-                        <div className="flex items-center text-gray-700 py-4">
-                            <span className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                            </span>
-                            Harper with Mom
+                        <h3 className="font-bold text-lg mb-2">October 12th, 2025</h3>
+                         <div className="text-center text-gray-500 py-8">
+                            <p>No events scheduled today.</p>
                         </div>
-                        <button className="w-full bg-harper-purple text-white font-bold py-3 px-4 rounded-lg hover:bg-harper-purple-dark transition-colors">
-                            Request Schedule Change
+                        <button className="w-full bg-harper-purple text-white font-bold py-3 px-4 rounded-lg hover:bg-harper-purple-dark transition-colors" onClick={() => alert('Navigate to Living Handbook')}>
+                            Go to Living Handbook
                         </button>
                     </div>
                 </div>

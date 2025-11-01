@@ -48,6 +48,7 @@ const Header: React.FC<{ activeView: string; setActiveView: (view: string) => vo
                             <NavLink isActive={activeView === 'dashboard'} onClick={() => setActiveView('dashboard')}>Dashboard</NavLink>
                             <NavLink isActive={activeView === 'calendar'} onClick={() => setActiveView('calendar')}>Calendar</NavLink>
                              <NavLink isActive={activeView === 'communication'} onClick={() => setActiveView('communication')}>Communication</NavLink>
+                             <NavLink isActive={activeView === 'legal-team'} onClick={() => setActiveView('legal-team')}>Legal Team</NavLink>
                         </nav>
                     </div>
 
